@@ -12,13 +12,13 @@ def Login(browser, username, password):
     browser.find_element_by_id('login').click()
 
 
-def JudgeTeacher(course, browser):
+def JudgeTeacher(browser, exn):
     sleep(1)
     questions = browser.find_elements_by_class_name('item')
     radioxpath = 'div/div/div/label[{index:d}]'
     for question in questions[:-3] + [questions[-2]]:
         question.find_element_by_xpath(radioxpath.format(index=1)).click()
-    exn = int(input(course + '习题课次数：'))
+    
     exn2index = lambda n: (n - 1) // 3 + 2
     questions[-3].find_element_by_xpath(radioxpath.format(index=exn2index(exn))).click()
     questions[-1].find_element_by_tag_name('textarea').send_keys(' ')
@@ -44,6 +44,7 @@ def Judge(username, password):
     # 从评教界面回到选择界面时需要重新查找元素
     # 评教完成的课程会被自动排到末尾，只需选出第一个
     notfinish = True
+    exn = {}
     while notfinish:
         notfinish = False
 
@@ -53,12 +54,15 @@ def Judge(username, password):
         teachers = row.find_elements_by_xpath('td[3]/div/div/a')
         TAs = row.find_elements_by_xpath('td[4]/div/div/a')
         for teacher in teachers:
+            if coursename not in exn:
+                exn[coursename] = int(input(coursename + '习题课次数：'))
             if 'disabled' not in teacher.get_attribute('class'):
                 teacher.click()
-                JudgeTeacher(coursename, browser)
+                JudgeTeacher(browser, exn[coursename])
                 notfinish = True
                 break
-        if notfinish: continue
+        if notfinish:
+            continue
         for TA in TAs:
             if 'disabled' not in TA.get_attribute('class'):
                 TA.click()
